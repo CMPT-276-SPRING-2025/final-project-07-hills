@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/protected-route";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroups } from "@/hooks/useGroups";
 import { getGroupScores, updateUserScore } from "@/services/pomodoroService";
+import { ArrowLeftIcon } from "lucide-react";
 
 interface ScoreEntry {
   userId: string;
@@ -36,11 +37,30 @@ function PomodoroContent() {
   const initialTimeRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [referrer, setReferrer] = useState<string>("/welcome");
+
+  useEffect(() => {
+    // Check if we came from a group page
+    const groupIdFromUrl = searchParams.get("groupId");
+    const groupNameFromUrl = searchParams.get("from");
+    
+    if (groupIdFromUrl && groupNameFromUrl) {
+      // We came from a specific group page
+      setReferrer(`/group/${groupNameFromUrl}`);
+    } else {
+      // Default to welcome page
+      setReferrer("/welcome");
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const groupIdFromUrl = searchParams.get("groupId");
+    
+    // If groupId is in URL, select that group initially but don't lock it
     if (groupIdFromUrl && groups.some((g) => g.id === groupIdFromUrl)) {
       setSelectedGroup(groupIdFromUrl);
     } else if (groups.length > 0 && !selectedGroup) {
+      // If no group is selected yet and we have groups, select the first one
       setSelectedGroup(groups[0].id);
     }
   }, [groups, searchParams, selectedGroup]);
@@ -187,13 +207,14 @@ function PomodoroContent() {
     <main className="min-h-screen bg-[#FAF3E9] pt-8 px-8">
       {/* Top Action Bar */}
       <div className="w-full max-w-6xl mx-auto flex justify-between items-center mb-6">
-        {/* Home Button */}
-        <Link href="/welcome">
-          <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium shadow">
-            <HomeIcon className="h-5 w-5" />
-            Home
-          </Button>
-        </Link>
+        {/* Back Button */}
+        <Button 
+          onClick={() => router.push(referrer)}
+          className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium shadow"
+        >
+          <ArrowLeftIcon className="h-5 w-5" />
+          Back
+        </Button>
 
         {/* Sign Out Button */}
         <Button

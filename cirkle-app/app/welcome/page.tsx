@@ -114,12 +114,12 @@ export default function Welcome() {
     <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center p-8">
     <div className="w-full flex justify-between items-center gap-4 max-w-5xl">
   {/* Left-aligned Pomodoro button */}
-    <Link href="/pomodoro">
-      <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium">
-        <TimerIcon className="h-5 w-5" />
-        Start a Pomodoro
-      </Button>
-    </Link>
+  <Link href="/pomodoro">
+  <Button className="flex items-center gap-2 bg-[#924747] hover:bg-[#924747]/90 text-white rounded-full px-6 py-3 text-lg font-medium">
+    <TimerIcon className="h-5 w-5" />
+    Start a Pomodoro
+  </Button>
+</Link>
 
     {/* Right-aligned Sign Out button */}
     <Button 
