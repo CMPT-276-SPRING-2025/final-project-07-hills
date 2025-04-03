@@ -409,7 +409,7 @@ export const renameResource = async (
     }
     
     // 3. Update the name in Firestore
-    await updateGroupResourceName(groupId, resourceId, resourceType, newName);
+    
     
     console.log(`Successfully renamed ${resourceType} ${resourceId} to "${newName}"`);
     return true;
