@@ -239,7 +239,7 @@ function PomodoroContent() {
 
       {/* Main Content */}
       <div className="relative w-full max-w-6xl mx-auto">
-        <div className="bg-white rounded-3xl p-8 shadow-md border border-[#E4D5C2] flex flex-col gap-6">
+        <div className="bg-[#F9F0E6] rounded-3xl p-8 shadow-md border border-[#E4D5C2] flex flex-col gap-6">
           <div className="flex gap-8">
             {/* Timer */}
             <div className="flex-1 flex flex-col items-center justify-center">
@@ -320,7 +320,7 @@ function PomodoroContent() {
               <Button
                 onClick={resetTimer}
                 variant="outline"
-                className="mt-4 rounded-full py-2 border-[#3B2F2F] text-[#3B2F2F] hover:bg-[#3B2F2F]/10 text-sm w-full max-w-sm"
+                className="mt-4 rounded-full py-2 border-[#3B2F2F] text-white text-sm w-full max-w-sm hover:text-white bg-[#924747] hover:bg-[#924747]/90"
               >
                 Reset Timer
               </Button>
@@ -338,7 +338,7 @@ function PomodoroContent() {
                       className={`w-full ${
                         selectedGroup === group.id
                           ? "bg-[#3B2F2F] text-white"
-                          : "border-[#3B2F2F] text-[#3B2F2F] bg-transparent hover:bg-[#3B2F2F]/10"
+                          : "border-[#3B2F2F] text-[#3B2F2F] bg-white"
                       } rounded-full text-sm flex justify-between items-center px-4 py-2`}
                       onClick={() => handleGroupChange(group.id)}
                     >
