@@ -16,6 +16,9 @@ import { getUserById } from '@/services/userService';
 import { Tooltip } from '@/components/ui/tooltip';
 import { XIcon } from "lucide-react";
 import { syncResourceNames } from "@/services/resourceSyncService";
+import { EditIcon } from "lucide-react";
+import { renameResource } from "@/services/googleDriveService";
+import { updateGroupResourceName } from '@/services/groupService';
 
 
 export default function GroupPage() {
@@ -36,6 +39,14 @@ export default function GroupPage() {
     type: 'document' | 'file';
     id: string;
   } | null>(null);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [resourceToRename, setResourceToRename] = useState<{
+    id: string;
+    name: string;
+    type: 'document' | 'file';
+  } | null>(null);
+  const [newName, setNewName] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
   
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,6 +134,101 @@ export default function GroupPage() {
     });
   };
 
+ // Update the initiateRename function
+const initiateRename = (resource: any, type: 'document' | 'file') => {
+  // Verify that the current user is the creator of the resource
+  if (resource.createdBy !== user?.uid) {
+    setError(`You can only rename your own ${type}s.`);
+    return;
+  }
+  
+  console.log(`Initiating rename for ${type} ${resource.id}: ${resource.name}`);
+  setResourceToRename({
+    id: resource.id,
+    name: resource.name,
+    type,
+    createdBy: resource.createdBy
+  });
+  setNewName(resource.name);
+  setShowRenameModal(true);
+};
+ // Update the handleRename function
+const handleRename = async () => {
+  if (!resourceToRename || !newName.trim() || !group || !user) return;
+  
+  try {
+    setIsRenaming(true);
+    setError(null);
+    
+    // Verify that the current user is the creator of the resource
+    if (resourceToRename.createdBy !== user.uid) {
+      throw new Error(`You can only rename your own ${resourceToRename.type}s.`);
+    }
+    
+    // Always update in Firestore first, since this is likely to succeed
+    await updateGroupResourceName(
+      group.id, 
+      resourceToRename.id, 
+      resourceToRename.type === 'document' ? 'documents' : 'files', 
+      newName.trim()
+    );
+    
+    // Get access token - but don't show errors if this fails
+    let accessToken = getGoogleAccessToken();
+    
+    // Only try Google Drive update if we have a token
+    let driveUpdateSuccessful = false;
+    if (accessToken) {
+      try {
+        // Call the Drive API directly - but don't fail the whole operation if it errors
+        const response = await fetch("/api/rename-drive-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileId: resourceToRename.id,
+            newName: newName.trim(),
+            accessToken,
+            groupId: group.id,
+            resourceType: resourceToRename.type === 'document' ? 'documents' : 'files'
+          }),
+        });
+        
+        if (response.ok) {
+          driveUpdateSuccessful = true;
+        } else {
+          // Silently log error but don't show to user since Firestore update worked
+          console.warn("Google Drive rename had issues, but Firestore was updated");
+        }
+      } catch (driveErr) {
+        // Silently log error but don't show to user
+        console.warn("Google Drive rename error:", driveErr);
+      }
+    }
+    
+    // Refresh group data to show the updated name
+    const refreshedGroup = await getGroupById(group.id);
+    setGroup(refreshedGroup);
+    
+    // Show appropriate success message
+    if (driveUpdateSuccessful) {
+      setSuccessMessage(`${resourceToRename.type === 'document' ? 'Document' : 'File'} renamed successfully!`);
+    } else {
+      setSuccessMessage(`${resourceToRename.type === 'document' ? 'Document' : 'File'} renamed in group. Changes may not be visible to other users until they refresh.`);
+    }
+    
+    setTimeout(() => setSuccessMessage(null), 3000);
+    
+    // Reset state
+    setShowRenameModal(false);
+    setResourceToRename(null);
+    setNewName("");
+  } catch (err: any) {
+    console.error("Error renaming resource:", err);
+    setError(err.message || "Failed to rename. Please try again.");
+  } finally {
+    setIsRenaming(false);
+  }
+};
   
 
   // Handle document creation
@@ -221,17 +327,25 @@ export default function GroupPage() {
       setSuccessMessage("Deleting...");
   
       const hasPermissions = await ensureGooglePermissions();
-      if (!hasPermissions) return;
+      if (!hasPermissions) {
+        setSuccessMessage(null); // Clear the "Deleting..." message if permissions check fails
+        return;
+      }
   
       let accessToken = getGoogleAccessToken();
       if (!accessToken) {
         const hasPermissions = await ensureGooglePermissions();
-        if (!hasPermissions) return;
-
+        if (!hasPermissions) {
+          setSuccessMessage(null); // Clear the "Deleting..." message if permissions check fails
+          return;
+        }
+  
         accessToken = getGoogleAccessToken(); // retry after permission
-        if (!accessToken) throw new Error("Access token still missing after requesting permissions");
+        if (!accessToken) {
+          setSuccessMessage(null); // Clear the "Deleting..." message if getting token fails
+          throw new Error("Access token still missing after requesting permissions");
+        }
       }
-
   
       const response = await fetch("/api/delete-drive-file", {
         method: "POST",
@@ -239,9 +353,17 @@ export default function GroupPage() {
         body: JSON.stringify({ fileId: resourceId, accessToken }),
       });
   
+      const responseData = await response.json().catch(() => ({ error: "Unknown error" }));
+  
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(`Google Drive deletion failed: ${error.error}`);
+        // Check for specific error types
+        if (response.status === 403 || responseData.permissionError) {
+          throw new Error(`Unable to delete this ${type}. Only the creator can delete their own ${type}s.`);
+        } else if (response.status === 404 || responseData.notFoundError) {
+          throw new Error(`This ${type} no longer exists or was already deleted.`);
+        } else {
+          throw new Error(responseData.error || `Failed to delete ${type}. Please try again.`);
+        }
       }
   
       // Firestore update
@@ -257,33 +379,54 @@ export default function GroupPage() {
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       console.error(`Failed to delete ${type}:`, err);
-      setError(`Failed to delete ${type}. ${err.message || "Please try again."}`);
+      // Clear the "Deleting..." message when an error occurs
+      setSuccessMessage(null);
+      // Set error state
+      setError(err.message || `Failed to delete ${type}. Please try again.`);
     } finally {
       setConfirmDelete(null); // Close modal
     }
   };
   
   
-  
-
   // Request Google permissions if needed
+  // Replace the ensureGooglePermissions function in app/group/[groupName]/page.tsx
   const ensureGooglePermissions = async (): Promise<boolean> => {
-    if (!hasValidGoogleToken()) {
-      try {
+    try {
+      // Check if we have a valid token
+      const hasValid = await hasValidGoogleToken();
+      
+      if (!hasValid) {
+        // Request new permissions
+        console.log("No valid Google token, requesting permissions...");
         const tokenData = await requestGooglePermissions();
         if (!tokenData) {
-          setError("You must grant Google Drive access to delete or upload files.");
+          setError("You must grant Google Drive access to manage files.");
           return false;
         }
-        saveGoogleTokenData(tokenData); // if needed
         return true;
-      } catch (err) {
-        console.error("Google auth error:", err);
-        setError("Google Drive authentication failed. Please try again.");
-        return false;
       }
+      
+      return true;
+    } catch (err) {
+      console.error("Google auth error:", err);
+      
+      // Check for specific error types and provide helpful messages
+      let errorMessage = "Google Drive authentication failed. Please try again.";
+      
+      if (err instanceof Error) {
+        if (err.message.includes("popup")) {
+          errorMessage = "Popup was blocked. Please allow popups for this site and try again.";
+        } else if (err.message.includes("network")) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else if (err.message.includes("permission")) {
+          errorMessage = "Permission denied. Please grant all required permissions to use this feature.";
+        }
+      }
+      
+      setError(errorMessage);
+      return false;
     }
-    return true;
   };
   
 
@@ -313,22 +456,37 @@ export default function GroupPage() {
   }
 
   if (error) {
-    return (
-      <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center justify-center">
-        <div className="text-2xl text-red-500">{error}</div>
-        <Link href="/welcome" className="mt-4">
-          <Button>Back to Home</Button>
-        </Link>
-      </main>
-    );
+    // For critical errors (group not found or loading failed),
+    // we should still show the critical error page.
+    const isCriticalError = error.includes("Group not found") || 
+                            error.includes("Failed to load group data");
+    
+    if (isCriticalError) {
+      return (
+        <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center justify-center">
+          <div className="text-2xl text-red-500">{error}</div>
+          <Link href="/welcome" className="mt-4">
+            <Button>Back to Groups</Button>
+          </Link>
+        </main>
+      );
+    }
+    
+    // For non-critical errors, we'll show them in the notifications area
+    // and continue showing the group page - this is handled later in the component
   }
 
-  if (!group || !group.id || !group.resources) {
+  if (!group || !group.id) {
     return (
       <main className="min-h-screen bg-[#FAF3E9] flex flex-col items-center justify-center">
         <div className="text-2xl text-gray-700">Group data is still loading...</div>
       </main>
     );
+  }
+  
+  // Ensure resources exist with default empty arrays
+  if (!group.resources) {
+    group.resources = { documents: [], files: [] };
   }
   
 
@@ -343,7 +501,7 @@ export default function GroupPage() {
             <HomeIcon className="h-5 w-5" />
             <span>Home</span>
           </Link>
-          <Link href={`/pomodoro?groupId=${group.id}`} className="flex items-center space-x-2 text-black font-medium text-lg">
+          <Link href={`/pomodoro?groupId=${group.id}&from=${encodeURIComponent(groupName)}`} className="flex items-center space-x-2 text-black font-medium text-lg">
             <TimerIcon className="h-5 w-5" />
             <span>Pomodoro</span>
           </Link>
@@ -387,7 +545,19 @@ export default function GroupPage() {
       {/* Error Message */}
       {error && (
         <div className="w-full max-w-6xl mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-          {error}
+          <div className="flex justify-between items-center">
+            <div className="flex-1 mr-4">{error}</div>
+            <div className="flex space-x-3">
+              <Button 
+                variant="outline"
+                size="sm"
+                className="border-red-500 text-red-500 hover:bg-red-50"
+                onClick={() => setError(null)}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -447,33 +617,51 @@ export default function GroupPage() {
           </div>
         ) : (
           <div className="flex gap-6 mt-4 flex-wrap">
-            {/* Display existing documents */}
-            {group?.resources?.documents?.map((doc: any) => (
-          <div 
-            key={doc.id}
-            className="relative w-[200px] h-[100px]"
-          >
-            <a 
-              href={doc.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full h-full"
-            >
-              <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-                <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
-                  {doc.name}
-                </span>
-              </Button>
-            </a>
-            <button
-             onClick={() => setConfirmDelete({ type: 'document', id: doc.id })}
-
-              className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
-              title="Delete document">
-              <XIcon className="w-5 h-5" />
-            </button>
-          </div>
-        ))}
+{/* Replace the existing document mapping code with this updated version */}
+{/* Replace the existing document mapping code with this updated version */}
+{group?.resources?.documents?.map((doc: any) => (
+  <div 
+    key={doc.id}
+    className="relative w-[200px] h-[100px]"
+  >
+    <a 
+      href={doc.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block w-full h-full"
+    >
+      <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+        <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+          {doc.name}
+        </span>
+      </Button>
+    </a>
+    <div className="absolute top-1 right-1 flex space-x-1">
+      {/* Only show the rename button if the current user is the creator */}
+      {doc.createdBy === user?.uid && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            initiateRename(doc, 'document');
+          }}
+          className="w-5 h-5 text-sm text-white flex items-center justify-center hover:text-blue-300"
+          title="Rename document"
+        >
+          <EditIcon className="w-4 h-4" />
+        </button>
+      )}
+      {doc.createdBy === user?.uid && (
+      <button
+        onClick={() => setConfirmDelete({ type: 'document', id: doc.id })}
+        className="w-5 h-5 text-sm text-white flex items-center justify-center hover:text-red-300"
+        title="Delete document"
+      >
+        <XIcon className="w-5 h-5" />
+      </button>
+      )}
+    </div>
+  </div>
+))}
             
             <Button 
               className="w-[200px] h-[100px] flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md"
@@ -490,33 +678,51 @@ export default function GroupPage() {
           {/* Display existing files */}
           
 
-          {group?.resources?.files?.map((file: any) => (
-        <div 
-          key={file.id}
-          className="relative w-[200px] h-[100px]"
+{/* Replace the existing file mapping code with this updated version */}
+{/* Replace the existing file mapping code with this updated version */}
+{group?.resources?.files?.map((file: any) => (
+  <div 
+    key={file.id}
+    className="relative w-[200px] h-[100px]"
+  >
+    <a 
+      href={file.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block w-full h-full"
+    >
+      <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
+        <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
+          {file.name}
+        </span>
+      </Button>
+    </a>
+    <div className="absolute top-1 right-1 flex space-x-1">
+      {/* Only show the rename button if the current user is the creator */}
+      {file.createdBy === user?.uid && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            initiateRename(file, 'file');
+          }}
+          className="w-5 h-5 text-sm text-white flex items-center justify-center hover:text-blue-300"
+          title="Rename file"
         >
-          <a 
-            href={file.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full h-full"
-          >
-            <Button className="w-full h-full flex flex-col items-center justify-center bg-[#924747] text-white rounded-xl shadow-md">
-              <span className="text-lg font-semibold truncate text-ellipsis overflow-hidden whitespace-nowrap w-full text-center px-2">
-                {file.name}
-              </span>
-            </Button>
-          </a>
-          <button
-            onClick={() => setConfirmDelete({ type: 'file', id: file.id })}
-            className="absolute top-1 right-1 w-5 h-5 text-sm text-black flex items-center justify-center  hover:text-red-600"
-            title="Delete file">
-           <XIcon className="w-5 h-5" />
-        
-            
-          </button>
-        </div>
-      ))}
+          <EditIcon className="w-4 h-4" />
+        </button>
+      )}
+      {file.createdBy === user?.uid && (
+      <button
+        onClick={() => setConfirmDelete({ type: 'file', id: file.id })}
+        className="w-5 h-5 text-sm text-white flex items-center justify-center hover:text-red-300"
+        title="Delete file"
+      >
+        <XIcon className="w-5 h-5" />
+      </button>
+      )}
+    </div>
+  </div>
+))}
 
           
           <label className="w-[200px] h-[100px] cursor-pointer">
@@ -568,6 +774,78 @@ export default function GroupPage() {
     </div>
   </div>
 )}
+
+{/* ADD THE ERROR TOAST COMPONENT HERE, just before the closing main tag */}
+      {/* Error Toast with Back to Group option */}
+      {error && (
+        <div className="fixed bottom-4 right-4 bg-white border border-red-300 rounded-lg shadow-lg p-4 max-w-md animate-in slide-in-from-right">
+          <div className="flex flex-col">
+            <div className="flex items-start mb-2">
+              <div className="bg-red-100 p-2 rounded-full mr-3">
+                <XIcon className="h-5 w-5 text-red-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">Error</h3>
+                <p className="text-sm text-gray-700 mt-1">{error}</p>
+              </div>
+              <button 
+                onClick={() => setError(null)} 
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex justify-end space-x-2 mt-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setError(null)}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add this Rename Modal at the bottom of the component, right before the closing main tag */}
+    {showRenameModal && resourceToRename && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full">
+          <h3 className="text-lg font-semibold mb-4">
+            Rename {resourceToRename.type === 'document' ? 'Document' : 'File'}
+          </h3>
+          <input
+            type="text"
+            className="w-full p-2 border rounded mb-4"
+            placeholder="New name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            disabled={isRenaming}
+          />
+          <div className="flex justify-end space-x-3">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setShowRenameModal(false);
+                setResourceToRename(null);
+                setNewName("");
+              }}
+              disabled={isRenaming}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRename}
+              disabled={isRenaming || !newName.trim() || newName === resourceToRename.name}
+              className="bg-[#924747]"
+            >
+              {isRenaming ? 'Renaming...' : 'Rename'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
 
     </main>
     </ProtectedRoute>

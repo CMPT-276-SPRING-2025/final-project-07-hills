@@ -365,3 +365,56 @@ export async function fetchDriveFileMetadata(fileId: string, accessToken: string
 
   return await response.json(); // contains `id` and `name`
 }
+
+// Add this function to services/googleDriveService.ts
+
+/**
+ * Rename a document or file in Google Drive and update Firestore
+ * @param groupId The group ID
+ * @param resourceId The document or file ID
+ * @param resourceType The type of resource ('documents' or 'files')
+ * @param newName The new name for the resource
+ * @returns Success status
+ */
+export const renameResource = async (
+  groupId: string,
+  resourceId: string,
+  resourceType: 'documents' | 'files',
+  newName: string
+): Promise<boolean> => {
+  try {
+    console.log(`Renaming ${resourceType} ${resourceId} to "${newName}"`);
+    
+    // 1. Get access token
+    const accessToken = await getGoogleAccessToken();
+    if (!accessToken) {
+      throw new Error('No valid Google access token found. Please authenticate with Google.');
+    }
+    
+    // 2. Update the name in Google Drive
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files/${resourceId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: newName
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to rename in Google Drive: ${error.error?.message || 'Unknown error'}`);
+    }
+    
+    // 3. Update the name in Firestore
+    await updateGroupResourceName(groupId, resourceId, resourceType, newName);
+    
+    console.log(`Successfully renamed ${resourceType} ${resourceId} to "${newName}"`);
+    return true;
+  } catch (error) {
+    console.error(`Error renaming ${resourceType}:`, error);
+    throw error;
+  }
+};
