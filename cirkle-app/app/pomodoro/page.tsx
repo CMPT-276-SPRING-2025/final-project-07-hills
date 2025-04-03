@@ -39,6 +39,8 @@ function PomodoroContent() {
 
   const [referrer, setReferrer] = useState<string>("/welcome");
 
+  const [showOnlySelectedGroup, setShowOnlySelectedGroup] = useState(false);
+
   useEffect(() => {
     // Check if we came from a group page
     const groupIdFromUrl = searchParams.get("groupId");
@@ -55,8 +57,12 @@ function PomodoroContent() {
 
   useEffect(() => {
     const groupIdFromUrl = searchParams.get("groupId");
+    const fromGroup = searchParams.get("from") !== null;
     
-    // If groupId is in URL, select that group initially but don't lock it
+    // If we came from a specific group page, only show that group
+    setShowOnlySelectedGroup(fromGroup);
+    
+    // If groupId is in URL, select that group initially
     if (groupIdFromUrl && groups.some((g) => g.id === groupIdFromUrl)) {
       setSelectedGroup(groupIdFromUrl);
     } else if (groups.length > 0 && !selectedGroup) {
@@ -183,6 +189,7 @@ function PomodoroContent() {
   };
 
   const handleGroupChange = (groupId: string) => {
+    // Just update selected group (no need to modify showOnlySelectedGroup)
     setSelectedGroup(groupId);
   };
 
@@ -331,23 +338,43 @@ function PomodoroContent() {
               <h2 className="text-xl font-bold text-[#3B2F2F] mb-4">Groups</h2>
               <div className="flex flex-col space-y-2 mb-8">
                 {groups.length > 0 ? (
-                  groups.map((group) => (
-                    <Button
-                      key={group.id}
-                      variant={selectedGroup === group.id ? "default" : "outline"}
-                      className={`w-full ${
-                        selectedGroup === group.id
-                          ? "bg-[#3B2F2F] text-white"
-                          : "border-[#3B2F2F] text-[#3B2F2F] bg-white"
-                      } rounded-full text-sm flex justify-between items-center px-4 py-2`}
-                      onClick={() => handleGroupChange(group.id)}
-                    >
-                      <span className="truncate overflow-hidden whitespace-nowrap w-full text-left">
-                        {group.name}
-                      </span>
-                      {selectedGroup === group.id && <CheckIcon className="h-4 w-4 ml-2 shrink-0" />}
-                    </Button>
-                  ))
+                  showOnlySelectedGroup ? (
+                    // Show only the currently selected group
+                    groups
+                      .filter(group => group.id === selectedGroup)
+                      .map((group) => (
+                        <Button
+                          key={group.id}
+                          variant="default"
+                          className="bg-[#3B2F2F] text-white rounded-full text-sm flex justify-between items-center px-4 py-2"
+                          // No onClick handler since we don't want to allow changing
+                        >
+                          <span className="truncate overflow-hidden whitespace-nowrap w-full text-left">
+                            {group.name}
+                          </span>
+                          <CheckIcon className="h-4 w-4 ml-2 shrink-0" />
+                        </Button>
+                      ))
+                  ) : (
+                    // Show all groups with ability to switch between them
+                    groups.map((group) => (
+                      <Button
+                        key={group.id}
+                        variant={selectedGroup === group.id ? "default" : "outline"}
+                        className={`w-full ${
+                          selectedGroup === group.id
+                            ? "bg-[#3B2F2F] text-white"
+                            : "border-[#3B2F2F] text-[#3B2F2F] bg-transparent hover:bg-[#3B2F2F]/10"
+                        } rounded-full text-sm flex justify-between items-center px-4 py-2`}
+                        onClick={() => handleGroupChange(group.id)}
+                      >
+                        <span className="truncate overflow-hidden whitespace-nowrap w-full text-left">
+                          {group.name}
+                        </span>
+                        {selectedGroup === group.id && <CheckIcon className="h-4 w-4 ml-2 shrink-0" />}
+                      </Button>
+                    ))
+                  )
                 ) : (
                   <p className="text-[#3B2F2F] text-sm">
                     No groups found. Create or join a group to track your progress.
