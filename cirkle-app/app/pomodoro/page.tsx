@@ -1,5 +1,5 @@
 "use client";
-
+import React from 'react';
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -417,3 +417,4 @@ export default function Pomodoro() {
     </ProtectedRoute>
   );
 }
+export { PomodoroContent }; // add at the end
