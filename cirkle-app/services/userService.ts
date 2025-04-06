@@ -33,7 +33,17 @@ import {
       
       if (userSnap.exists()) {
 
-        return { id: userSnap.id, ...userSnap.data() } as UserData;
+        const data = userSnap.data();
+        return { 
+          uid: userSnap.id, 
+          displayName: data?.displayName || null, 
+          email: data?.email || null, 
+          photoURL: data?.photoURL || null, 
+          groups: data?.groups || [], 
+          createdAt: data?.createdAt || null, 
+          updatedAt: data?.updatedAt || null,
+          ...data 
+        } as UserData;
       }
       
       return null;
@@ -101,7 +111,7 @@ import {
         };
         
         await setDoc(userRef, userData, { merge: true });
-        return { id: uid, ...userSnap.data(), ...userData } as UserData;
+        return { uid, ...userSnap.data(), ...userData } as UserData;
       }
     } catch (error) {
       console.error(`Error creating/updating user profile:`, error);

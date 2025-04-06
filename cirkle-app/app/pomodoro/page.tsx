@@ -66,7 +66,7 @@ function PomodoroContent() {
       setSelectedGroup(groupIdFromUrl);
     } else if (groups.length > 0 && !selectedGroup) {
       // If no group is selected yet and we have groups, select the first one
-      setSelectedGroup(groups[0].id);
+      setSelectedGroup(groups[0]?.id ?? null);
     }
   }, [groups, searchParams, selectedGroup]);
 
@@ -365,7 +365,7 @@ function PomodoroContent() {
                             ? "bg-[#3B2F2F] text-white"
                             : "border-[#3B2F2F] text-[#3B2F2F] bg-transparent hover:bg-[#3B2F2F]/10"
                         } rounded-full text-sm flex justify-between items-center px-4 py-2`}
-                        onClick={() => handleGroupChange(group.id)}
+                        onClick={() => handleGroupChange(group.id ?? "")}
                       >
                         <span className="truncate overflow-hidden whitespace-nowrap w-full text-left">
                           {group.name}

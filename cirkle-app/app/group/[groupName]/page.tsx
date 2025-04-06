@@ -39,10 +39,11 @@ export default function GroupPage() {
   } | null>(null);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [resourceToRename, setResourceToRename] = useState<{
-    id: string;
-    name: string;
-    type: 'document' | 'file';
-  } | null>(null);
+      id: string;
+      name: string;
+      type: 'document' | 'file';
+      createdBy: string;
+    } | null>(null);
   const [newName, setNewName] = useState("");
   const [isRenaming, setIsRenaming] = useState(false);
   
