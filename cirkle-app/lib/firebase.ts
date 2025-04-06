@@ -14,13 +14,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Debug - log partial API key to ensure it's loaded (remove in production)
-if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-  const apiKeyPreview = process.env.NEXT_PUBLIC_FIREBASE_API_KEY.substring(0, 5) + '...';
-  console.log(`Firebase config loaded with API key: ${apiKeyPreview}`);
-} else {
-  console.warn('Firebase API key not found in environment variables');
-}
 
 // Initialize Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

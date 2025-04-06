@@ -3,10 +3,6 @@ import {
     doc, 
     getDoc, 
     setDoc, 
-    collection, 
-    query, 
-    where, 
-    getDocs,
     serverTimestamp
   } from 'firebase/firestore';
   import { User } from 'firebase/auth';
@@ -32,16 +28,24 @@ import {
    */
   export const getUserById = async (userId: string): Promise<UserData | null> => {
     try {
-      console.log(`Getting user data for ID: ${userId}`);
       const userRef = doc(db, USERS_COLLECTION, userId);
       const userSnap = await getDoc(userRef);
       
       if (userSnap.exists()) {
-        console.log(`User found for ID: ${userId}`);
-        return { id: userSnap.id, ...userSnap.data() } as UserData;
+
+        const data = userSnap.data();
+        return { 
+          uid: userSnap.id, 
+          displayName: data?.displayName || null, 
+          email: data?.email || null, 
+          photoURL: data?.photoURL || null, 
+          groups: data?.groups || [], 
+          createdAt: data?.createdAt || null, 
+          updatedAt: data?.updatedAt || null,
+          ...data 
+        } as UserData;
       }
       
-      console.log(`No user found for ID: ${userId}`);
       return null;
     } catch (error) {
       console.error(`Error getting user ${userId}:`, error);
@@ -57,7 +61,7 @@ import {
    */
   export const updateUserData = async (userId: string, userData: Partial<UserData>): Promise<UserData> => {
     try {
-      console.log(`Updating user data for ID: ${userId}`);
+
       const userRef = doc(db, USERS_COLLECTION, userId);
       
       // Merge with existing data if it exists
@@ -65,11 +69,9 @@ import {
         ...userData,
         updatedAt: serverTimestamp()
       }, { merge: true });
-      
-      console.log(`Successfully updated user data for ID: ${userId}`);
+    
       return { id: userId, ...userData } as UserData;
     } catch (error) {
-      console.error(`Error updating user data for ${userId}:`, error);
       throw error;
     }
   };
@@ -82,14 +84,11 @@ import {
   export const createUserProfile = async (user: User): Promise<UserData> => {
     try {
       const { uid, displayName, email, photoURL } = user;
-      console.log(`Creating/updating user profile for ${displayName || 'unnamed user'} (${uid})`);
-      
       const userRef = doc(db, USERS_COLLECTION, uid);
       const userSnap = await getDoc(userRef);
       
       if (!userSnap.exists()) {
         // Create new user profile
-        console.log(`Creating new user profile for ${uid}`);
         const userData: UserData = {
           uid,
           displayName,
@@ -101,11 +100,9 @@ import {
         };
         
         await setDoc(userRef, userData);
-        console.log(`Successfully created new user profile for ${uid}`);
         return { id: uid, ...userData };
       } else {
         // Update existing user profile
-        console.log(`Updating existing user profile for ${uid}`);
         const userData = {
           displayName,
           email,
@@ -114,8 +111,7 @@ import {
         };
         
         await setDoc(userRef, userData, { merge: true });
-        console.log(`Successfully updated user profile for ${uid}`);
-        return { id: uid, ...userSnap.data(), ...userData } as UserData;
+        return { uid, ...userSnap.data(), ...userData } as UserData;
       }
     } catch (error) {
       console.error(`Error creating/updating user profile:`, error);
@@ -130,7 +126,6 @@ import {
    */
   export const getUserEmails = async (userIds: string[]): Promise<(string | null)[]> => {
     try {
-      console.log(`Looking up emails for ${userIds.length} users`);
       const emails: (string | null)[] = [];
       
       // Process in batches to avoid excessive reads
@@ -150,7 +145,6 @@ import {
         });
       }
       
-      console.log(`Found ${emails.filter(Boolean).length} valid emails out of ${userIds.length} users`);
       return emails;
     } catch (error) {
       console.error(`Error getting user emails:`, error);

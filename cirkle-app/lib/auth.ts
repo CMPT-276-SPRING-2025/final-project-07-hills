@@ -1,6 +1,5 @@
 // lib/auth.ts
-import { 
-  GoogleAuthProvider, 
+import {
   signInWithPopup, 
   signOut as firebaseSignOut, 
   User,
@@ -32,7 +31,6 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
 export const signOut = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth);
-    console.log('User signed out successfully');
   } catch (error) {
     console.error('Error signing out:', error);
     throw error;

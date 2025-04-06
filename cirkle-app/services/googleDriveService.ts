@@ -3,9 +3,6 @@ import { getGoogleAccessToken } from './googleAuthService';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { GroupData } from './groupService';
-import { deleteObject, ref } from "firebase/storage";
-import { storage } from "@/lib/firebase"; // only if using Firebase Storage
-import { google } from "googleapis";
 
 const GROUPS_COLLECTION = 'groups';
 
@@ -49,7 +46,6 @@ export const createGroupDocument = async (
   }
   
   try {
-    console.log(`Creating document "${title}" for group ${groupId}`);
     
     // 1. Create a Google Doc through the Drive API
     const response = await fetch('https://www.googleapis.com/drive/v3/files', {
@@ -70,7 +66,7 @@ export const createGroupDocument = async (
     }
     
     const docData = await response.json();
-    console.log(`Document created with ID: ${docData.id}`);
+
     
     // 2. Get full file details including webViewLink
     const fileResponse = await fetch(
@@ -88,11 +84,9 @@ export const createGroupDocument = async (
     }
     
     const fileDetails = await fileResponse.json();
-    console.log(`Got document details with link: ${fileDetails.webViewLink}`);
     
     // 3. Set permissions to "Anyone with the link can edit"
     await setLinkSharingPermission(fileDetails.id, accessToken);
-    console.log(`Set "Anyone with the link can edit" permission for document ${fileDetails.id}`);
     
     // 4. Store the document reference in Firestore
     // Use current date instead of serverTimestamp() for arrays
@@ -107,7 +101,6 @@ export const createGroupDocument = async (
     };
     
     await addResourceToGroup(groupId, 'documents', documentData);
-    console.log(`Document reference added to group in Firestore`);
     
     return documentData;
   } catch (error) {
@@ -137,7 +130,6 @@ export const uploadGroupFile = async (
   }
   
   try {
-    console.log(`Uploading file "${file.name}" for group ${groupId}`);
     
     // 1. Upload file to Google Drive
     const metadata = {
@@ -163,7 +155,6 @@ export const uploadGroupFile = async (
     }
     
     const uploadedFile = await uploadResponse.json();
-    console.log(`File uploaded with ID: ${uploadedFile.id}`);
     
     // 2. Get full file details including webViewLink
     const fileResponse = await fetch(
@@ -181,11 +172,9 @@ export const uploadGroupFile = async (
     }
     
     const fileDetails = await fileResponse.json();
-    console.log(`Got file details with link: ${fileDetails.webViewLink}`);
     
     // 3. Set permissions to "Anyone with the link can edit"
     await setLinkSharingPermission(fileDetails.id, accessToken);
-    console.log(`Set "Anyone with the link can edit" permission for file ${fileDetails.id}`);
     
     // 4. Store the file reference in Firestore
     // Use current date instead of serverTimestamp() for arrays
@@ -201,7 +190,6 @@ export const uploadGroupFile = async (
     };
     
     await addResourceToGroup(groupId, 'files', fileData);
-    console.log(`File reference added to group in Firestore`);
     
     return fileData;
   } catch (error) {
@@ -218,7 +206,6 @@ export const uploadGroupFile = async (
  */
 const setLinkSharingPermission = async (fileId: string, accessToken: string): Promise<any | null> => {
   try {
-    console.log(`Setting link sharing permission for file ${fileId}`);
     
     const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
       method: 'POST',
@@ -238,8 +225,6 @@ const setLinkSharingPermission = async (fileId: string, accessToken: string): Pr
       console.warn(`Warning: Failed to set link sharing: ${error.error?.message || 'Unknown error'}`);
       return null;
     }
-    
-    console.log(`Successfully set link sharing for file ${fileId}`);
     return response.json();
   } catch (error) {
     console.warn(`Warning: Error setting link sharing:`, error);
@@ -260,7 +245,6 @@ const addResourceToGroup = async (
   resourceData: DocumentData | FileData
 ): Promise<boolean> => {
   try {
-    console.log(`Adding ${resourceType} to group ${groupId} in Firestore`);
     const groupRef = doc(db, GROUPS_COLLECTION, groupId);
     const groupSnapshot = await getDoc(groupRef);
     
@@ -283,8 +267,7 @@ const addResourceToGroup = async (
         resources: resources,
         updatedAt: serverTimestamp()
       });
-      
-      console.log(`Successfully added ${resourceType} to group`);
+   
       return true;
     } else {
       throw new Error(`Group ${groupId} not found`);
@@ -383,7 +366,6 @@ export const renameResource = async (
   newName: string
 ): Promise<boolean> => {
   try {
-    console.log(`Renaming ${resourceType} ${resourceId} to "${newName}"`);
     
     // 1. Get access token
     const accessToken = await getGoogleAccessToken();
@@ -409,9 +391,6 @@ export const renameResource = async (
     }
     
     // 3. Update the name in Firestore
-    
-    
-    console.log(`Successfully renamed ${resourceType} ${resourceId} to "${newName}"`);
     return true;
   } catch (error) {
     console.error(`Error renaming ${resourceType}:`, error);
