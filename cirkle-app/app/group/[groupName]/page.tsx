@@ -13,11 +13,9 @@ import { requestGooglePermissions, hasValidGoogleToken, saveGoogleTokenData, get
 import { getUserGroups } from '@/services/groupService';
 import ProtectedRoute from "@/components/protected-route";
 import { getUserById } from '@/services/userService';
-import { Tooltip } from '@/components/ui/tooltip';
 import { XIcon } from "lucide-react";
 import { syncResourceNames } from "@/services/resourceSyncService";
 import { EditIcon } from "lucide-react";
-import { renameResource } from "@/services/googleDriveService";
 import { updateGroupResourceName } from '@/services/groupService';
 
 
@@ -142,7 +140,6 @@ const initiateRename = (resource: any, type: 'document' | 'file') => {
     return;
   }
   
-  console.log(`Initiating rename for ${type} ${resource.id}: ${resource.name}`);
   setResourceToRename({
     id: resource.id,
     name: resource.name,
@@ -398,7 +395,6 @@ const handleRename = async () => {
       
       if (!hasValid) {
         // Request new permissions
-        console.log("No valid Google token, requesting permissions...");
         const tokenData = await requestGooglePermissions();
         if (!tokenData) {
           setError("You must grant Google Drive access to manage files.");
@@ -429,23 +425,6 @@ const handleRename = async () => {
     }
   };
   
-
-  // Helper function to format date safely
-  const formatDate = (timestamp: any): string => {
-    if (!timestamp) return 'Unknown';
-    
-    // If it's a Firebase timestamp with toDate method
-    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-      return new Date(timestamp.toDate()).toLocaleDateString();
-    }
-    
-    // If it's a regular Date object or timestamp
-    try {
-      return new Date(timestamp).toLocaleDateString();
-    } catch (err) {
-      return 'Invalid date';
-    }
-  };
 
   if (loading) {
     return (

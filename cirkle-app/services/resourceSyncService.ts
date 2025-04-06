@@ -31,14 +31,12 @@ export async function syncResourceNames(group: any, userId: string) {
                                      (new Date().getTime() - new Date(resource.lastUpdated).getTime() < 5000);
           
           if (wasRecentlyUpdated) {
-            console.log(`Skipping sync for recently updated ${type} ${resource.id}`);
             continue;
           }
           
           const metadata = await fetchDriveFileMetadata(resource.id, accessToken);
 
           if (metadata.name !== resource.name) {
-            console.log(`Name mismatch found for ${type} ${resource.id}: "${resource.name}" vs "${metadata.name}"`);
             updates.push({ type, id: resource.id, newName: metadata.name });
           }
         } catch (err) {
@@ -49,7 +47,6 @@ export async function syncResourceNames(group: any, userId: string) {
 
     // Apply all updates in parallel
     if (updates.length > 0) {
-      console.log(`Syncing ${updates.length} resource name changes`);
       await Promise.all(
         updates.map(update => 
           updateGroupResourceName(group.id, update.id, update.type, update.newName)

@@ -9,7 +9,6 @@ import {
     getDocs,
     serverTimestamp,
     orderBy,
-    limit,
     Timestamp
   } from 'firebase/firestore';
   import { db } from '@/lib/firebase';
@@ -32,7 +31,6 @@ import {
    */
   export const getGroupScores = async (groupId: string): Promise<PomodoroScore[]> => {
     try {
-      console.log(`Fetching pomodoro scores for group ${groupId}`);
       
       const scoresQuery = query(
         collection(db, POMODORO_SCORES_COLLECTION),
@@ -92,7 +90,6 @@ import {
     scoreToAdd: number
   ): Promise<number> => {
     try {
-      console.log(`Updating score for user ${userId} in group ${groupId} by ${scoreToAdd} points`);
       
       const scoreDocRef = doc(db, POMODORO_SCORES_COLLECTION, `${groupId}_${userId}`);
       const scoreDoc = await getDoc(scoreDocRef);

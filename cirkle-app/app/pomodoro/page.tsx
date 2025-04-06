@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { HomeIcon, PauseIcon, PlayIcon, CheckIcon, LogOutIcon } from "lucide-react";
+import { PauseIcon, PlayIcon, CheckIcon, LogOutIcon } from "lucide-react";
 import ProtectedRoute from "@/components/protected-route";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroups } from "@/hooks/useGroups";
