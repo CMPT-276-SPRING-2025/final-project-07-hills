@@ -58,7 +58,7 @@ an all-encompassing platform with only the essential features to make learning y
 [Link to Milestone 2 Report]()
 
 # Video Milestone 2
-[Video Milestone 2 Link]()
+[Video Milestone 2 Link](https://drive.google.com/file/d/1nkxcNTN5n1uol579fc_cvPrIqeKvj9dN/view?usp=sharing)
 
 # AI-Disclosures Milestone 0:
 - [Nafeesa Leena AI-Disclosure Form](docs/ai-disclosures/P0_AI_Declaration_Nafeesa_Leena_301576890.pdf)
