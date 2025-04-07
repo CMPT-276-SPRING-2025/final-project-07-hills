@@ -55,7 +55,7 @@ an all-encompassing platform with only the essential features to make learning y
 [Link to Progress Report](docs/reports/progress-report.pdf)
 
 # Milestone 2 Report
-[Link to Milestone 2 Report]()
+[Link to Milestone 2 Report](docs/reports/CMPT-276-M2-Report.pdf)
 
 # Video Milestone 2
 [Video Milestone 2 Link](https://drive.google.com/file/d/1nkxcNTN5n1uol579fc_cvPrIqeKvj9dN/view?usp=sharing)
