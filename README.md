@@ -52,7 +52,7 @@ an all-encompassing platform with only the essential features to make learning y
 [Video Milestone 1 Link](https://drive.google.com/file/d/18Ssu78-thtO6I0n-fLGf6IYGUS6D3XRS/view?usp=sharing)
 
 # Progress Report
-[Link to Progress Report](docs/reports/progress report.pdf)
+[Link to Progress Report](docs/reports/progress-report.pdf)
 
 # Milestone 2 Report
 [Link to Milestone 2 Report]()
