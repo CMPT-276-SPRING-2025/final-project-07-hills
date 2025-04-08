@@ -10,10 +10,10 @@
 - Nafeesa Leena
 
 # Project Name:
-- Circke: Collaborative Learning Platform
+- Cirkle: Collaborative Learning Platform
 
 # Project Description:
-- Circle is a web application designed to enhance collaborative learning. 
+- Cirkle is a web application designed to enhance collaborative learning. 
 It does this by providing an integrated platform with tools for collaboration, 
 such as shared notes, file uploads, and a group pomodoro timer with 
 leaderboards for your group. Many people either struggle to effectively collaborate 
