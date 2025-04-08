@@ -21,6 +21,17 @@ or use 2-3 different platforms to meet all their needs. Cirkle aims to address t
 an all-encompassing platform with only the essential features to make learning your
  next course/skill a breeze.
 
+# CIRKLE WEBSITE GUIDE
+- https://final-project-07-hills.vercel.app/
+- Login using gmail
+- Add groups 
+- Fool around 
+- Then join the sO8E7Qi1PFoJxMbYQZzW
+- Press on the recent notes in that group
+- Press on the link on Google doc
+- Do the Google Form and rate our site
+
+
 # How to Deploy Locally:
 1. Git clone repo
 2. Navigate to final-project-07-hills (using cd final-project-07-hills)
@@ -83,9 +94,9 @@ an all-encompassing platform with only the essential features to make learning y
 - [Yogya Agrawal AI-Disclosure Form Report](docs/ai-disclosures/P2_Report_AI_Declaration_Yogya_Agrawal_301590908.pdf)
 - [Yogya Agrawal AI-Disclosure Form Video](docs/ai-disclosures/P2_Video_AI_Declaration_Yogya_Agrawal_301590908.pdf)
 - [Yogya Agrawal AI-Disclosure Form Code](docs/ai-disclosures/P2_Code_AI_Declaration_Yogya_Agrawal_301590908.pdf)
-- [Nafeesa Leena AI-Disclosure Form Report]()
-- [Nafeesa Leena AI-Disclosure Form Video]()
-- [Nafeesa Leena AI-Disclosure Form Code]()
+- [Nafeesa Leena AI-Disclosure Form Report](docs/ai-disclosures/P2_Report_AI_Declaration_Nafeesa_Leena_301576890.pdf)
+- [Nafeesa Leena AI-Disclosure Form Video](docs/ai-disclosures/P2_Video_AI_Declaration_Nafeesa_Leena_301576890.pdf)
+- [Nafeesa Leena AI-Disclosure Form Code](docs/ai-disclosures/P2_Code_AI_Declaration_Nafeesa_Leena_301576890.pdf)
 - [Julianna Morena AI-Disclosure Form Report](docs/ai-disclosures/P2_Report_AI_Declaration_Julianna_Morena_301577023.pdf)
 - [Julianna Morena AI-Disclosure Form Video](docs/ai-disclosures/P2_Video_AI_Declaration_Julianna_Morena_301577023.pdf)
 - [Julianna Morena AI-Disclosure Form Code](docs/ai-disclosures/P2_Code_AI_Declaration_Julianna_Morena_301577023.pdf)
