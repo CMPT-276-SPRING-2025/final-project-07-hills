@@ -77,11 +77,15 @@ an all-encompassing platform with only the essential features to make learning y
 - [Julianna Morena AI-Disclosure Form Video](docs/ai-disclosures/P1_Video_AI_Declaration_Julianna_Morena_301577023.pdf)
 
 # AI-Disclosures Milestone 2:
-- [Mudasser Mashal AI-Disclosure Form Report]()
-- [Mudasser Mashal AI-Disclosure Form Video]()
+- [Mudasser Mashal AI-Disclosure Form Report](docs/ai-disclosures/P2_Report_AI_Declaration_Mudasser_Mashal_301562811.pdf)
+- [Mudasser Mashal AI-Disclosure Form Video](docs/ai-disclosures/P2_Video_AI_Declaration_Mudasser_Mashal_301562811.pdf)
+- [Mudasser Mashal AI-Disclosure Form Code](docs/ai-disclosures/P2_Code_AI_Declaration_Mudasser_Mashal_301562811.pdf)
 - [Yogya Agrawal AI-Disclosure Form Report]()
 - [Yogya Agrawal AI-Disclosure Form Video]()
+- [Yogya Agrawal AI-Disclosure Form Code]()
 - [Nafeesa Leena AI-Disclosure Form Report]()
 - [Nafeesa Leena AI-Disclosure Form Video]()
+- [Nafeesa Leena AI-Disclosure Form Code]()
 - [Julianna Morena AI-Disclosure Form Report]()
 - [Julianna Morena AI-Disclosure Form Video]()
+- [Julianna Morena AI-Disclosure Form Code]()
